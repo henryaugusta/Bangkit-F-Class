@@ -1,4 +1,4 @@
-package com.muhammadfurqan.bangkitfclass.sqlite
+package com.muhammadfurqan.bangkitfclass.sqlite.model
 
 /**
  * @author by furqan on 09/04/2021

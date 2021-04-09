@@ -2,15 +2,30 @@ package com.muhammadfurqan.bangkitfclass.sqlite.db
 
 import android.content.ContentValues
 import android.content.Context
-import com.muhammadfurqan.bangkitfclass.sqlite.BookModel
+import com.muhammadfurqan.bangkitfclass.sqlite.db.BookDatabaseOpenHelper.Companion.KEY_ID
+import com.muhammadfurqan.bangkitfclass.sqlite.model.BookModel
 
 /**
  * @author by furqan on 09/04/2021
  */
 class BookDatabaseManager(context: Context) {
 
+
     private val db by lazy {
         BookDatabaseOpenHelper(context)
+    }
+
+    fun update(id: Int, newName : String): Int {
+        val contentValue = ContentValues()
+        contentValue.put(BookDatabaseOpenHelper.KEY_NAME, newName)
+
+        val writeableDb = db.writableDatabase
+        return writeableDb.update(BookDatabaseOpenHelper.TABLE_BOOK, contentValue, "$KEY_ID = ?", arrayOf(id.toString()))
+    }
+
+    fun deleteById(id: String): Int {
+        val writeableDb = db.writableDatabase
+        return writeableDb.delete(BookDatabaseOpenHelper.TABLE_BOOK, "$KEY_ID = '$id'", null)
     }
 
     fun saveData(name: String) {
@@ -49,10 +64,11 @@ class BookDatabaseManager(context: Context) {
             // do a loop until the end of the data
             while (moveToNext()) {
                 // get the id and name from this row
-                val book = BookModel(
-                    id = getInt(getColumnIndexOrThrow(BookDatabaseOpenHelper.KEY_ID)),
-                    name = getString(getColumnIndexOrThrow(BookDatabaseOpenHelper.KEY_NAME))
-                )
+                val book =
+                    BookModel(
+                        id = getInt(getColumnIndexOrThrow(BookDatabaseOpenHelper.KEY_ID)),
+                        name = getString(getColumnIndexOrThrow(BookDatabaseOpenHelper.KEY_NAME))
+                    )
                 // add to book list
                 bookList.add(book)
             }

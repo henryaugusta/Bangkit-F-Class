@@ -1,14 +1,24 @@
 package com.muhammadfurqan.bangkitfclass.sqlite
 
+import android.app.AlertDialog
 import android.os.Bundle
+import android.text.InputType
+import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.view.marginStart
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.muhammadfurqan.bangkitfclass.R
+import com.muhammadfurqan.bangkitfclass.databinding.ActivitySqliteBinding
+import com.muhammadfurqan.bangkitfclass.sqlite.adapter.BookAdapter
 import com.muhammadfurqan.bangkitfclass.sqlite.db.BookDatabaseManager
+import com.muhammadfurqan.bangkitfclass.sqlite.model.BookModel
 import kotlinx.coroutines.launch
+
 
 /**
  *
@@ -33,6 +43,10 @@ import kotlinx.coroutines.launch
 
 class SQLiteActivity : AppCompatActivity() {
 
+    lateinit var viewBinding: ActivitySqliteBinding
+    lateinit var bookAdapter: BookAdapter
+
+    private var m_Text = ""
     private lateinit var etBookName: AppCompatEditText
     private lateinit var btnAdd: AppCompatButton
     private lateinit var btnRead: AppCompatButton
@@ -43,7 +57,66 @@ class SQLiteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_sqlite)
+        viewBinding = ActivitySqliteBinding.inflate(layoutInflater)
+        setContentView(viewBinding.root)
+
+        viewBinding.rvBookList.apply {
+            layoutManager = LinearLayoutManager(applicationContext)
+            setHasFixedSize(true)
+        }
+
+        bookAdapter = BookAdapter()
+        viewBinding.rvBookList.adapter = bookAdapter
+        onRead()
+
+
+        bookAdapter.setInterface(object : BookAdapter.BookAdapterInterface {
+            override fun onDeleteClick(model: BookModel) {
+                lifecycleScope.launch {
+                    Toast.makeText(
+                        applicationContext,
+                        "Menghapus Buku ${model.name}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    bookDb.deleteById(model.id.toString())
+                }
+                onRead()
+            }
+
+            override fun onEditClick(model: BookModel) {
+                val mContext = this@SQLiteActivity
+                Toast.makeText(mContext, "Test Edit", Toast.LENGTH_LONG).show()
+
+                val builder = AlertDialog.Builder(mContext)
+                builder.setTitle("Masukkan Nama Buku Yang Baru")
+
+                val input = EditText(mContext)
+                input.setText(model.name)
+                builder.setView(input)
+
+                builder.setPositiveButton(
+                    "OK"
+                ) { dialog, which ->
+
+                    m_Text = input.text.toString()
+                    onEdit(model.id,m_Text)
+                    Toast.makeText(mContext,m_Text,Toast.LENGTH_LONG).show()
+                    dialog.dismiss()
+                }
+                builder.setNegativeButton(
+                    "Cancel"
+                ) { dialog, which -> dialog.cancel() }
+
+                mContext.runOnUiThread(Runnable {
+                    builder.show()
+                })
+
+
+            }
+
+        })
+
+
 
         etBookName = findViewById(R.id.et_book_name)
         btnAdd = findViewById(R.id.btn_add)
@@ -58,6 +131,14 @@ class SQLiteActivity : AppCompatActivity() {
         }
     }
 
+    fun onEdit(id: Int, newTitle: String) {
+        Log.d("onEdit","onEdit")
+        lifecycleScope.launch {
+            bookDb.update(id, newTitle)
+        }
+        onRead()
+    }
+
     private fun onAdd() {
         val bookName = etBookName.text.toString()
         if (bookName.isNotEmpty()) {
@@ -68,14 +149,17 @@ class SQLiteActivity : AppCompatActivity() {
         } else {
             Toast.makeText(this, "Please fill in the book name", Toast.LENGTH_SHORT).show()
         }
+        onRead()
     }
 
     private fun onRead() {
         val bookList = bookDb.getData()
+        bookAdapter.setData(bookList.toMutableList())
+        bookAdapter.notifyDataSetChanged()
         val bookListString = bookList.joinToString(separator = "\n") {
             "Book ${it.id} is ${it.name}"
         }
-        Toast.makeText(this, bookListString, Toast.LENGTH_SHORT).show()
     }
+
 
 }

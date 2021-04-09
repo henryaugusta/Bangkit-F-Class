@@ -16,4 +16,6 @@
     <string name="add_label">Add</string>
     <string name="list_books_in_database_label">List Books in Database</string>
     <string name="get_phone_list_label">Get Phone List</string>
+    <string name="simpan_perubahan">Simpan Perubahan</string>
+    <string name="edit_button">Edit Button</string>
 </resources>
